@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Injury Result</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+    {% load static %}
+
+    <style>
+        .dropdown-menu {
+
+    animation: slideDown 0.25s ease;
+    z-index: 11000 !important;
+}
+
+@keyframes slideDown {
+
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+
+
+        .card {
+
+    animation: fadeInUp 0.8s ease;
+
+}
+
+@keyframes fadeInUp {
+
+    from {
+
+        opacity: 0;
+
+        transform: translateY(30px);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+
+    }
+
+}
+        body {
+            font-family: 'Poppins', sans-serif;
+            height: 100vh;
+            margin: 0;
+            background: url("{% static 'images/download.jpg' %}") no-repeat center center/cover;
+        }
+
+        /* Overlay */
+        body::before {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .card {
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .progress {
+            height: 25px;
+            border-radius: 15px;
+        }
+
+        .chart-container {
+            width: 300px;
+            margin: auto;
+        }
+
+        .navbar {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            position: relative;
+            z-index: 10000;
+        }
+
+        .nav-link, .navbar-brand {
+            color: white !important;
+        }
+
+        .nav-link:hover {
+            color: #00ffcc !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- 🔝 NAVBAR -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid content">
+        <a class="navbar-brand fw-bold">🏃 Injury Predictor</a>
+
+        <div class="d-flex align-items-center gap-3">
+
+            <!-- Go back to input -->
+            
+
+            <!-- Dashboard -->
+            
+
+            <!-- Profile -->
+            <!-- 👤 Profile Dropdown -->
+<div class="dropdown">
+
+<a class="nav-link dropdown-toggle"
+   href="#"
+   role="button"
+   data-bs-toggle="dropdown">
+
+    <i class="bi bi-person-circle fs-4"></i>
+
+</a>
+
+<ul class="dropdown-menu dropdown-menu-end">
+
+<li class="px-3 py-2">
+
+<strong>
+{{ request.user.username }}
+</strong>
+
+<br>
+
+<small class="text-muted">
+{{ request.user.email }}
+</small>
+
+</li>
+
+<li>
+<hr class="dropdown-divider">
+</li>
+
+<li>
+<a class="dropdown-item"
+   href="{% url 'dashboard' %}">
+📊 Dashboard
+</a>
+</li>
+
+<li>
+<a class="dropdown-item"
+   href="{% url 'predict_injury' %}">
+📝 New Prediction
+</a>
+</li>
+
+<li>
+<a class="dropdown-item text-danger"
+   href="{% url 'logout' %}">
+🚪 Logout
+</a>
+</li>
+
+</ul>
+
+</div>
+
+            <!-- Logout -->
+           
+
+        </div>
+    </div>
+</nav>
+
+<!-- CONTENT -->
+<div class="container mt-5 content">
+
+    <div class="card shadow p-4">
+
+        <!-- RESULT TITLE -->
+        <h2 class="text-center mb-4">
+            {{ result }}
+        </h2>
+
+        <!-- PROGRESS BAR -->
+        <div class="mb-4">
+            <div class="progress-bar"
+                id="riskBar"
+                role="progressbar"
+                style="width: 0%; background-color: {{ color }};">
+
+                {{ width }}%
+
+            </div>
+        </div>
+
+        <!-- CHART -->
+        <div class="chart-container">
+            <canvas id="riskChart"></canvas>
+        </div>
+
+        <!-- PROBABILITY -->
+       <!-- <div class="text-center mt-4">
+            <p><strong>Low:</strong> {{ proba.0 }}</p>
+            <p><strong>Medium:</strong> {{ proba.1 }}</p>
+            <p><strong>High:</strong> {{ proba.2 }}</p>
+        </div>-->
+
+        <!-- 🔥 AI SUGGESTION -->
+        {% if suggestion %}
+        <div class="mt-4 p-3 rounded" style="background: rgba(255,255,255,0.15);">
+            <h5>AI Recommendation</h5>
+            <pre>{{ suggestion }}</pre>
+        </div>
+        {% endif %}
+
+    </div>
+
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    const probaData = {{ proba|safe }};
+
+    new Chart(document.getElementById('riskChart'), {
+
+        type: 'bar',
+
+        data: {
+
+            labels: ["Low", "Medium", "High"],
+
+            datasets: [{
+
+                data: probaData,
+
+                backgroundColor: [
+                    "#28a745",
+                    "#ffc107",
+                    "#dc3545"
+                ],
+
+                borderRadius: 8
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            animation: {
+
+                duration: 1500,
+
+                easing: 'easeOutBounce'
+
+            },
+
+            plugins: {
+
+                legend: {
+
+                    display: false
+
+                }
+
+            },
+
+            scales: {
+
+                y: {
+
+                    beginAtZero: true,
+
+                    max: 1
+
+                }
+
+            }
+
+        }
+
+    });
+
+});
+
+</script>
+<script>
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    let bar = document.getElementById("riskBar");
+
+    let target = {{ width }};
+
+    let current = 0;
+
+    let interval = setInterval(function() {
+
+        if (current >= target) {
+
+            clearInterval(interval);
+
+        } else {
+
+            current++;
+
+            bar.style.width = current + "%";
+
+        }
+
+    }, 15);
+
+});
+
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
