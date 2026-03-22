@@ -141,23 +141,6 @@ http://127.0.0.1:8000/
 
 ---
 
-## 📸 Screenshots (Add Later)
-
-You can add screenshots like:
-
-* Login Page
-* Athlete Dashboard
-* Prediction Form
-* Result Page
-
-Example:
-
-```
-![Dashboard Screenshot](screenshots/dashboard.png)
-```
-
----
-
 ## 🚀 Future Improvements
 
 * Improve model accuracy with larger datasets
